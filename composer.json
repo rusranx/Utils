@@ -1,0 +1,19 @@
+{
+	"name": "rusranx/utils",
+	"description": "Rusran Utils",
+	"license": "GPL-3.0+",
+	"authors": [
+		{
+			"name": "Yuri Ashurkov",
+			"email": "admin@rusran.ru",
+            "homepage": "http://rusran.ru"
+		}
+	],
+	"autoload": {
+		"psr-0": { "RusranUtils": "lib/" }
+	},
+	"minimum-stability": "dev",
+	"require": {
+      "php": ">=5.4.0"
+    }
+}
