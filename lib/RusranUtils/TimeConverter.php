@@ -21,13 +21,23 @@ class TimeConverter
 		$_months = 0,
 		$_years = 0;
 	private
-		$_unit = [
-		["год", "года", "лет", "г", "г", "л"],
-		["месяц", "месяца", "месяцев", "мес", "мес", "мес"],
-		["день", "дня", "дней", "д", "д", "д"],
-		["час", "часа", "часов", "ч", "ч", "ч"],
-		["минута", "минуты", "минут", "мин", "мин", "мин"],
-		["секунда", "секунды", "секунд", "сек", "сек", "сек"],
+		$_forms = [
+		[
+			["г", "г", "л"],
+			["мес", "мес", "мес"],
+			["д", "д", "д"],
+			["ч", "ч", "ч"],
+			["мин", "мин", "мин"],
+			["сек", "сек", "сек"]
+		],
+		[
+			["год", "года", "лет"],
+			["месяц", "месяца", "месяцев"],
+			["день", "дня", "дней"],
+			["час", "часа", "часов"],
+			["минута", "минуты", "минут"],
+			["секунда", "секунды", "секунд"]
+		]
 	];
 
 	public function __construct($unixtime)
@@ -52,17 +62,6 @@ class TimeConverter
 		$this->_years = ($time - ($time % 31104000)) / 31104000;
 	}
 
-	private function _morph($n, $f1, $f2, $f5)
-	{
-		$n = abs(intval($n)) % 100;
-		if ($n > 10 && $n < 20) return $f5;
-		$n = $n % 10;
-		if ($n > 1 && $n < 5) return $f2;
-		if ($n == 1) return $f1;
-
-		return $f5;
-	}
-
 	public function getUnixtime()
 	{
 		return $this->_unixtime;
@@ -70,60 +69,50 @@ class TimeConverter
 
 	public function getHuman($max_groups = INF, $short = false)
 	{
+		$short = (bool)$short;
+		
 		if ($max_groups < 1) $max_groups = INF;
 		$for_print = [];
 
 		if ($this->_years > 0) {
 			$for_print[] = sprintf("%d %s",
 				$this->_years,
-				(!$short)
-					? $this->_morph(intval($this->_years), $this->_unit[0][0], $this->_unit[0][1], $this->_unit[0][2])
-					: $this->_morph(intval($this->_years), $this->_unit[0][3], $this->_unit[0][4], $this->_unit[0][5])
+				MeasureWord::getFormByForms($this->_forms[ $short ][0], intval($this->_years))
 			); // years
 		}
 
 		if ($this->_months > 0) {
 			$for_print[] = sprintf("%d %s",
 				$this->_months,
-				(!$short)
-					? $this->_morph(intval($this->_months), $this->_unit[1][0], $this->_unit[1][1], $this->_unit[1][2])
-					: $this->_morph(intval($this->_years), $this->_unit[1][3], $this->_unit[1][4], $this->_unit[1][5])
+				MeasureWord::getFormByForms($this->_forms[ $short ][1], intval($this->_months))
 			); // months
 		}
 
 		if ($this->_days > 0) {
 			$for_print[] = sprintf("%d %s",
 				$this->_days,
-				(!$short)
-					? $this->_morph(intval($this->_days), $this->_unit[2][0], $this->_unit[2][1], $this->_unit[2][2])
-					: $this->_morph(intval($this->_years), $this->_unit[2][3], $this->_unit[2][4], $this->_unit[2][5])
+				MeasureWord::getFormByForms($this->_forms[ $short ][2], intval($this->_days))
 			); // days
 		}
 
 		if ($this->_hours > 0) {
 			$for_print[] = sprintf("%d %s",
 				$this->_hours,
-				(!$short)
-					? $this->_morph(intval($this->_hours), $this->_unit[3][0], $this->_unit[3][1], $this->_unit[3][2])
-					: $this->_morph(intval($this->_years), $this->_unit[3][3], $this->_unit[3][4], $this->_unit[3][5])
+				MeasureWord::getFormByForms($this->_forms[ $short ][3], intval($this->_hours))
 			); // hours
 		}
 
 		if ($this->_minutes > 0) {
 			$for_print[] = sprintf("%d %s",
 				$this->_minutes,
-				(!$short)
-					? $this->_morph(intval($this->_minutes), $this->_unit[4][0], $this->_unit[4][1], $this->_unit[4][2])
-					: $this->_morph(intval($this->_years), $this->_unit[4][3], $this->_unit[4][4], $this->_unit[4][5])
+				MeasureWord::getFormByForms($this->_forms[ $short ][4], intval($this->_minutes))
 			); // minutes
 		}
 
 		if ($this->_seconds > 0 || empty($for_print)) {
 			$for_print[] = sprintf("%d %s",
 				$this->_seconds,
-				(!$short)
-					? $this->_morph(intval($this->_seconds), $this->_unit[5][0], $this->_unit[5][1], $this->_unit[5][2])
-					: $this->_morph(intval($this->_years), $this->_unit[5][3], $this->_unit[5][4], $this->_unit[5][5])
+				MeasureWord::getFormByForms($this->_forms[ $short ][5], intval($this->_seconds))
 			); // seconds
 		}
 
@@ -133,7 +122,7 @@ class TimeConverter
 	public function __toString()
 	{
 		$days = (($this->_years * 12) + $this->_months) * 30 + $this->_days;
-		$days = ($days > 0) ? $days . 'д ' : '';
+		$days = ($days > 0) ? $days . MeasureWord::getFormByForms($this->_forms[1][2], $days) . ' ' : '';
 
 		return sprintf("%s%02d:%02d:%02d", $days, $this->_hours, $this->_minutes, $this->_seconds);
 	}

@@ -4,289 +4,356 @@
  * @project RusranUtils
  * 
  * @author Stsepanchuk Ruslan
+ * @author  Yuri Ashurkov (rusranx)
+ * @license http://opensource.org/licenses/gpl-license.php GNU Public License
  */
 
 namespace RusranUtils;
 
-class Curl {
+use RusranUtils\Exception\MethodNotFoundException;
+
+class Curl
+{
 
 	var $ch;
-	var $httpget = '';	
+	var $httpget = '';
 	var $head = '';
-	var $is_post = false;
+	var $isPost = false;
 	var $postparams = null;
-	var $httpheader = array ();
-	var $cookie = array ();
+	var $httpheader = [];
+	var $cookie = [];
 	var $proxy = '';
-	var $proxy_user_data = '';
+	var $proxyUserData = '';
 	var $verbose = 0;
 	var $referer = '';
 	var $autoreferer = 0;
 	var $writeheader = '';
 	var $agent = 'Mozilla/5.0 (Windows NT 5.1; rv:23.0) Gecko/20100101 Firefox/23.0';
-	var $url = '';	
+	var $url = '';
 	var $followlocation = 1;
 	var $returntransfer = 1;
-	var $ssl_verifypeer = 0;
-	var $ssl_verifyhost = 2;
+	var $sslVerifypeer = 0;
+	var $sslVerifyhost = 2;
 	var $sslcert = '';
 	var $sslkey = '';
 	var $cainfo = '';
 	var $cookiefile = '';
 	var $timeout = 0;
-	var $connect_time = 0;
-	var $encoding = 'deflate';	
+	var $connectTime = 0;
+	var $encoding = 'deflate';
 	var $interface = '';
-	
-	function __construct (){
+
+	function __construct()
+	{
 		$this->ch = curl_init();
-		$this->set_httpheader(array('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language: ru-ru,ru;q=0.8,en-us;q=0.5,en;q=0.3','Accept-Charset: windows-1251,utf-8;q=0.7,*;q=0.7'));
+		$this->setHttpheader(['Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language: ru-ru,ru;q=0.8,en-us;q=0.5,en;q=0.3', 'Accept-Charset: windows-1251,utf-8;q=0.7,*;q=0.7']);
 	}
-	
-	function get ($url){
+
+	function get($url)
+	{
 		$this->url = $url;
+
 		return $this->exec();
 	}
-	
-	function post ($url, $postparams = null){
-		$this->url = $url;		
-		$this->is_post = true;
-		
+
+	function post($url, $postparams = null)
+	{
+		$this->url = $url;
+		$this->isPost = true;
+
 		$this->postparams = $postparams;
-		
+
 		return $this->exec();
 	}
-	
-	function set_httpget ($httpget){
+
+	function setHttpget($httpget)
+	{
 		$this->httpget = $httpget;
 	}
-	
-	function set_referer ($referer){
+
+	function setReferer($referer)
+	{
 		$this->referer = $referer;
 	}
-	
-	function set_autoreferer ($autoreferer){
+
+	function setAutoreferer($autoreferer)
+	{
 		$this->autoreferer = $autoreferer;
 	}
-	
-	function set_useragent ($agent){
+
+	function setUseragent($agent)
+	{
 		$this->agent = $agent;
-	}	
-	
-	function set_cookie (){
-		preg_match_all('/Set-Cookie: (.*?)=(.*?);/i', $this->head, $matches, PREG_SET_ORDER);
-		
-		for ($i = 0; $i < count($matches); $i++) {
-			if ($matches[$i][2] == 'deleted') {
-				$this->delete_cookie($matches[$i][1]);
-			} else {
-				$this->cookie[$matches[$i][1]] = $matches[$i][2];
-			}
-		}	
 	}
-	
-	function add_cookie ($cookie){
-		foreach ($cookie as $name => $value) {
-			$this->cookie[$name] = $value;
+
+	function setCookie()
+	{
+		preg_match_all('/Set-Cookie: (.*?)=(.*?);/i', $this->head, $matches, PREG_SET_ORDER);
+
+		for ($i = 0; $i < count($matches); $i++) {
+			if ($matches[ $i ][2] == 'deleted') {
+				$this->deleteCookie($matches[ $i ][1]);
+			} else {
+				$this->cookie[ $matches[ $i ][1] ] = $matches[ $i ][2];
+			}
 		}
 	}
-	
-	function delete_cookie ($name){
-		if (isset($this->cookie[$name]))
-			unset($this->cookie[$name]);
+
+	function addCookie($cookie)
+	{
+		foreach ($cookie as $name => $value) {
+			$this->cookie[ $name ] = $value;
+		}
 	}
-	
-	function get_cookie (){
+
+	function deleteCookie($name)
+	{
+		if (isset($this->cookie[ $name ]))
+			unset($this->cookie[ $name ]);
+	}
+
+	function getCookie()
+	{
 		return $this->cookie;
 	}
-	
-	function clear_cookie (){
-		$this->cookie = array ();
+
+	function clearCookie()
+	{
+		$this->cookie = [];
 	}
-	
-	function set_httpheader ($httpheader){
+
+	function setHttpheader($httpheader)
+	{
 		$this->httpheader = $httpheader;
 	}
-	
-	function clear_httpheader (){
-		$this->httpheader = array ();
+
+	function clearHttpheader()
+	{
+		$this->httpheader = [];
 	}
-	
-	function set_head ($head){
+
+	function setHead($head)
+	{
 		$this->head = $head;
 	}
-	
-	function set_encoding ($encoding){
+
+	function setEncoding($encoding)
+	{
 		$this->encoding = $encoding;
-	}	
-	
-	function set_interface ($interface){
+	}
+
+	function setInterface($interface)
+	{
 		$this->interface = $interface;
 	}
 
-	function set_writeheader ($writeheader){	
+	function setWriteheader($writeheader)
+	{
 		$this->writeheader = $writeheader;
 	}
 
-	function set_followlocation ($followlocation){
+	function setFollowlocation($followlocation)
+	{
 		$this->followlocation = $followlocation;
 	}
 
-	function set_returntransfer ($returntransfer){
+	function setReturntransfer($returntransfer)
+	{
 		$this->returntransfer = $returntransfer;
 	}
-	
-	function set_ssl_verifypeer ($ssl_verifypeer){
-		$this->ssl_verifypeer = $ssl_verifypeer;
+
+	function setSslVerifypeer($sslVerifypeer)
+	{
+		$this->sslVerifypeer = $sslVerifypeer;
 	}
-	
-	function set_ssl_verifyhost ($ssl_verifyhost){
-		$this->ssl_verifyhost = $ssl_verifyhost;
+
+	function setSslVerifyhost($sslVerifyhost)
+	{
+		$this->sslVerifyhost = $sslVerifyhost;
 	}
-	
-	function set_sslcert ($sslcert) {
+
+	function setSslcert($sslcert)
+	{
 		$this->sslcert = $sslcert;
 	}
-	
-	function set_sslkey ($sslkey) {
+
+	function setSslkey($sslkey)
+	{
 		$this->sslkey = $sslkey;
 	}
-	
-	function set_cainfo ($cainfo) {
+
+	function setCainfo($cainfo)
+	{
 		$this->cainfo = $cainfo;
 	}
-	
-	function set_timeout ($timeout){
+
+	function setTimeout($timeout)
+	{
 		$this->timeout = $timeout;
 	}
-	
-	function set_connect_time ($connect_time){
-		$this->connect_time = $connect_time;
+
+	function setConnectTime($connectTime)
+	{
+		$this->connectTime = $connectTime;
 	}
-	
-	function set_cookiefile ($cookiefile){
+
+	function setCookiefile($cookiefile)
+	{
 		$this->cookiefile = $cookiefile;
 	}
 
-	function set_proxy ($proxy){
+	function setProxy($proxy)
+	{
 		$this->proxy = $proxy;
 	}
-	
-	function set_proxy_auth ($proxy_user_data){
-		$this->proxy_user_data = $proxy_user_data;
+
+	function setProxyAuth($proxy_user_data)
+	{
+		$this->proxyUserData = $proxy_user_data;
 	}
-	
-	function set_verbose ($verbose){
+
+	function setVerbose($verbose)
+	{
 		$this->verbose = $verbose;
 	}
-	
-	function get_error (){
+
+	function getError()
+	{
 		return curl_errno($this->ch);
 	}
-	
-	function get_location (){
+
+	function getLocation()
+	{
 		$result = '';
-		
+
 		if (preg_match("/Location: (.*?)\r\n/is", $this->head, $matches)) {
 			$result = end($matches);
 		}
-	
+
 		return $result;
 	}
-	
-	function get_http_code (){
+
+	function getHttpCode()
+	{
 		return curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
 	}
-	
-	function get_speed_download (){
+
+	function getSpeedDownload()
+	{
 		return curl_getinfo($this->ch, CURLINFO_SPEED_DOWNLOAD);
 	}
-	
-	function get_content_type (){
+
+	function getContentType()
+	{
 		return curl_getinfo($this->ch, CURLINFO_CONTENT_TYPE);
 	}
-	
-	function get_url (){
+
+	function getUrl()
+	{
 		return curl_getinfo($this->ch, CURLINFO_EFFECTIVE_URL);
 	}
-	
-	function join_cookie() {
-		$result = array ();
+
+	function joinCookie()
+	{
+		$result = [];
 		foreach ($this->cookie as $key => $value)
 			$result[] = "$key=$value";
+
 		return join('; ', $result);
 	}
-	
-	function exec (){
+
+	function exec()
+	{
 		curl_setopt($this->ch, CURLOPT_USERAGENT, $this->agent);
 		curl_setopt($this->ch, CURLOPT_AUTOREFERER, $this->autoreferer);
 		curl_setopt($this->ch, CURLOPT_ENCODING, $this->encoding);
 		curl_setopt($this->ch, CURLOPT_URL, $this->url);
-		curl_setopt($this->ch, CURLOPT_POST, $this->is_post);
-		curl_setopt($this->ch, CURLOPT_FOLLOWLOCATION , $this->followlocation);
-		curl_setopt($this->ch, CURLOPT_RETURNTRANSFER,$this->returntransfer);	
-		curl_setopt($this->ch, CURLOPT_SSL_VERIFYPEER, $this->ssl_verifypeer);
-		curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, $this->ssl_verifyhost);
+		curl_setopt($this->ch, CURLOPT_POST, $this->isPost);
+		curl_setopt($this->ch, CURLOPT_FOLLOWLOCATION, $this->followlocation);
+		curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, $this->returntransfer);
+		curl_setopt($this->ch, CURLOPT_SSL_VERIFYPEER, $this->sslVerifypeer);
+		curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, $this->sslVerifyhost);
 		curl_setopt($this->ch, CURLOPT_HEADER, 1);
 		curl_setopt($this->ch, CURLOPT_TIMEOUT, $this->timeout);
-		curl_setopt($this->ch, CURLOPT_CONNECTTIMEOUT, $this->connect_time);
+		curl_setopt($this->ch, CURLOPT_CONNECTTIMEOUT, $this->connectTime);
 		curl_setopt($this->ch, CURLOPT_VERBOSE, $this->verbose);
-		
+
 		if ($this->referer)
-			curl_setopt($this->ch, CURLOPT_REFERER, $this->referer);			
-		
+			curl_setopt($this->ch, CURLOPT_REFERER, $this->referer);
+
 		if ($this->interface)
 			curl_setopt($this->ch, CURLOPT_INTERFACE, $this->interface);
-		
+
 		if ($this->httpget)
 			curl_setopt($this->ch, CURLOPT_HTTPGET, $this->httpget);
-		
-		if ($this->writeheader != '')
-			curl_setopt($this->ch, CURLOPT_WRITEHEADER, $this->writeheader);		
 
-		if ($this->is_post) {
+		if ($this->writeheader != '')
+			curl_setopt($this->ch, CURLOPT_WRITEHEADER, $this->writeheader);
+
+		if ($this->isPost) {
 			curl_setopt($this->ch, CURLOPT_POSTFIELDS, $this->postparams);
 		}
-		
+
 		if ($this->proxy)
 			curl_setopt($this->ch, CURLOPT_PROXY, $this->proxy);
-		
-		if ($this->proxy_user_data)
-			curl_setopt($this->ch, CURLOPT_PROXYUSERPWD, $this->proxy_user_data);
+
+		if ($this->proxyUserData)
+			curl_setopt($this->ch, CURLOPT_PROXYUSERPWD, $this->proxyUserData);
 
 		if ($this->cookie)
-			curl_setopt($this->ch, CURLOPT_COOKIE, $this->join_cookie());
-		
+			curl_setopt($this->ch, CURLOPT_COOKIE, $this->joinCookie());
+
 		if (count($this->httpheader))
 			curl_setopt($this->ch, CURLOPT_HTTPHEADER, $this->httpheader);
 
 		if ($this->sslcert)
 			curl_setopt($this->ch, CURLOPT_SSLCERT, $this->sslcert);
-			
+
 		if ($this->sslkey)
 			curl_setopt($this->ch, CURLOPT_SSLKEY, $this->sslkey);
-			
+
 		if ($this->cainfo)
 			curl_setopt($this->ch, CURLOPT_CAINFO, $this->cainfo);
-		
-		if ($this->cookiefile) {		
+
+		if ($this->cookiefile) {
 			curl_setopt($this->ch, CURLOPT_COOKIEFILE, $this->cookiefile);
 			curl_setopt($this->ch, CURLOPT_COOKIEJAR, $this->cookiefile);
-		}		
-		
+		}
+
 		$response = curl_exec($this->ch);
-		$this->set_head(substr($response, 0, curl_getinfo($this->ch, CURLINFO_HEADER_SIZE)));
+		$this->setHead(substr($response, 0, curl_getinfo($this->ch, CURLINFO_HEADER_SIZE)));
 		$response = substr($response, curl_getinfo($this->ch, CURLINFO_HEADER_SIZE));
-		$this->set_cookie();
-		
+		$this->setCookie();
+
 		$this->postparams = null;
-		$this->is_post = false;
-		
+		$this->isPost = false;
+
 		return $response;
 	}
-	
-	function __destruct (){
+
+	function __destruct()
+	{
 		curl_close($this->ch);
 	}
+
+	function camelize($input, $separator = '_')
+	{
+		return str_replace($separator, '', lcfirst(ucwords($input, $separator)));
+	}
+
+	function __call($name, $arguments)
+	{
+		switch (true) {
+			case method_exists($this, $name):
+				return call_user_func_array([$this, $name], $arguments);
+				break;
+			case method_exists($this, $newName = $this->camelize($name)):
+				return call_user_func_array([$this, $newName], $arguments);
+				break;
+			default:
+				throw new MethodNotFoundException(__CLASS__, $name);
+		}
+	}
 }
+
 ?>
